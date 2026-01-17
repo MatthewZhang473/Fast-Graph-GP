@@ -1,3 +1,4 @@
+import pytest
 import torch
 
 from grf_gp.sampler import GRFSampler
@@ -71,7 +72,45 @@ def test_grf_sampler_halt_and_multiprocessing():
     assert torch.count_nonzero(dense[1]) == 0
 
 
-def test_grf_sampler_matches_adj_powers_small_graph():
+@pytest.mark.parametrize("n_processes", [1, 2])
+def test_grf_sampler_consistent_across_process_counts(n_processes: int):
+    adjacency = torch.sparse_coo_tensor(
+        torch.tensor([[0, 0, 1], [1, 2, 2]]),
+        torch.tensor([1.0, 0.5, 0.2]),
+        size=(3, 3),
+    ).to_sparse_csr()
+
+    sampler = GRFSampler(
+        adjacency_matrix=adjacency,
+        walks_per_node=5,
+        p_halt=0.3,
+        max_walk_length=3,
+        seed=99,
+        use_tqdm=False,
+        n_processes=n_processes,
+    )
+    mats = sampler.sample_random_walk_matrices()
+
+    dense = [m.sparse_csr_tensor.to_dense() for m in mats]
+    # Baseline with single process should match
+    sampler_single = GRFSampler(
+        adjacency_matrix=adjacency,
+        walks_per_node=5,
+        p_halt=0.3,
+        max_walk_length=3,
+        seed=99,
+        use_tqdm=False,
+        n_processes=1,
+    )
+    dense_single = [
+        m.sparse_csr_tensor.to_dense() for m in sampler_single.sample_random_walk_matrices()
+    ]
+
+    for a, b in zip(dense, dense_single):
+        assert torch.allclose(a, b)
+
+
+def test_grf_sampler_matches_adj_powers_small_graph(n_processes: int):
     crows = [0, 3, 5, 7, 8]
     cols = [1, 2, 3, 0, 2, 0, 3, 0]
     data = [1, 1, 1, 1, 1, 1, 1, 1]
@@ -89,7 +128,7 @@ def test_grf_sampler_matches_adj_powers_small_graph():
         max_walk_length=3,
         seed=42,
         use_tqdm=False,
-        n_processes=4,
+        n_processes=1,
     )
     mats = sampler.sample_random_walk_matrices()
 
