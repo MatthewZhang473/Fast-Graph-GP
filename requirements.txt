@@ -1,6 +1,6 @@
 torch
-gpytorch
-linear_operator
 numpy
 scipy
 tqdm
+linear_operator==0.6
+gpytorch
