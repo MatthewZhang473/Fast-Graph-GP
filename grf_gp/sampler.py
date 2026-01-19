@@ -10,7 +10,7 @@ import numpy as np
 import torch
 from tqdm.auto import tqdm
 
-from .utils.linear_operator import SparseLinearOperator
+from .utils.sparse_lo import SparseLinearOperator
 from .utils.csr import to_sparse_csr, build_csr_from_entries
 
 
