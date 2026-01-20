@@ -1,6 +1,6 @@
 [project]
 name = "fast-graph-gp"
-version = "0.1.0"
+version = "0.1.1"
 description = "Graph Random Features for Scalable Gaussian Processes (GRF-GP)"
 readme = "README.md"
 authors = [{name = "Matthew Zhang", email = "matthew.zhang473@gmail.com"}]
