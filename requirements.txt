@@ -1,7 +1,0 @@
-torch
-numpy
-scipy
-tqdm
-linear_operator==0.6
-gpytorch
-pytest

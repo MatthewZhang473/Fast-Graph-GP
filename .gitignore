@@ -1,4 +1,17 @@
-venv/*
-pycache__/
-*.pyc
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+*.so
+
+# Virtual environments
+venv/
+.env/
+env/
+
+# IDEs and editors
 .DS_Store
+
