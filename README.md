@@ -7,10 +7,6 @@ Fast-Graph-GP is the package for performing fast Gaussian Process (GP) inference
 **This package is in beta.** Package development TODOs:
 
 - [x] support graph GP inference / training with GRFs
-- [ ] script to measure the inference time / space complexity
-- [ ] notebook to reproduce the regression experiments
-- [ ] notebook to reproduce the classificiation experiments
-- [ ] notebook to reproduce the BayesOpt experiments
 - [ ] support GRF++ samplers
 
 
