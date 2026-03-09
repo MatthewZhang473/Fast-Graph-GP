@@ -2,6 +2,7 @@ from collections import defaultdict
 from typing import Union
 import torch
 
+
 def to_sparse_csr(
     adjacency: Union[torch.Tensor, "torch.sparse.Tensor"],
 ) -> torch.Tensor:
@@ -16,17 +17,18 @@ def to_sparse_csr(
         return adjacency.to_sparse_csr()
     raise TypeError("adjacency must be a torch Tensor (dense or sparse)")
 
+
 def build_csr_from_entries(num_nodes: int, entries: defaultdict) -> torch.Tensor:
     if not entries:
         crow = torch.zeros(num_nodes + 1, dtype=torch.int64)
         col = torch.zeros(0, dtype=torch.int64)
-        vals = torch.zeros(0, dtype=torch.float32)
+        vals = torch.zeros(0, dtype=torch.float64)
         return torch.sparse_csr_tensor(crow, col, vals, (num_nodes, num_nodes))
 
     keys = list(entries.keys())
     rows = torch.tensor([k[0] for k in keys], dtype=torch.int64)
     cols = torch.tensor([k[1] for k in keys], dtype=torch.int64)
-    vals = torch.tensor([entries[k] for k in keys], dtype=torch.float32)
+    vals = torch.tensor([entries[k] for k in keys], dtype=torch.float64)
     # Torch expects crow_indices to be monotonic; use coo -> csr for simplicity
     coo = torch.sparse_coo_tensor(
         torch.stack([rows, cols]), vals, size=(num_nodes, num_nodes)
