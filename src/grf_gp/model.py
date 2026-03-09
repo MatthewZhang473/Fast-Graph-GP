@@ -1,10 +1,12 @@
 import torch
 import gpytorch
+from abc import ABC, abstractmethod
+from linear_operator.operators import DiagLinearOperator
 from .kernels.base import BaseGRFKernel
 from .inference import pathwise_conditioning
 
 
-class GraphGP(gpytorch.models.ExactGP):
+class GraphGP(gpytorch.models.ExactGP, ABC):
     def __init__(self, x_train, y_train, likelihood, kernel: BaseGRFKernel):
         super().__init__(x_train, y_train, likelihood)
         self.mean_module = gpytorch.means.ZeroMean()
@@ -17,7 +19,13 @@ class GraphGP(gpytorch.models.ExactGP):
         covar_x = self.covar_module(x)
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
-    def predict(self, x_test, batch_size=64):
+    @abstractmethod
+    def predict(self, x_test, **kwargs):
+        pass
+
+
+class GraphGRFGP(GraphGP):
+    def predict_sample(self, x_test, n_samples=64):
         with torch.no_grad():
             x_train = self.x_train.int().flatten()
             x_test = x_test.int().flatten()
@@ -31,6 +39,22 @@ class GraphGP(gpytorch.models.ExactGP):
                 phi=phi,
                 y_train=self.y_train,
                 noise_std=noise_std,
-                batch_size=batch_size,
+                batch_size=n_samples,
                 device=x_test.device,
             )
+
+    def predict(self, x_test, batch_size=64):
+        samples = self.predict_sample(x_test=x_test, n_samples=batch_size)
+        # Estimate posterior mean and variance from samples
+        mean = samples.mean(dim=0)
+        var = samples.var(dim=0, unbiased=True)
+        covar = DiagLinearOperator(var)
+        return gpytorch.distributions.MultivariateNormal(mean, covar)
+
+
+class GraphExactGP(GraphGP):
+    def predict(self, x_test, **kwargs):
+        self.eval()
+        self.likelihood.eval()
+        with torch.no_grad():
+            return self.likelihood(self(x_test))
