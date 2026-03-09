@@ -1,7 +1,8 @@
+import gpytorch
 import torch
 import torch.nn.functional as F
 
-from .base import BaseGRFKernel
+from .base import BaseExactKernel, BaseGRFKernel
 
 
 def diffusion(length: torch.Tensor, beta: torch.Tensor) -> torch.Tensor:
@@ -59,3 +60,30 @@ class GRFDiffusionKernel(BaseGRFKernel):
             device=self.raw_beta.device,
         )
         return self.sigma_f * diffusion(walk_lengths, self.beta)
+
+
+class ExactDiffusionKernel(BaseExactKernel):
+    """
+    Exact diffusion kernel.
+    """
+
+    def __init__(self, L, **kwargs):
+        super().__init__(**kwargs)
+        self.register_buffer("L", L)
+        self.register_parameter(
+            name="raw_beta", parameter=torch.nn.Parameter(torch.tensor(1.0))
+        )
+        self.register_parameter(
+            name="raw_sigma_f", parameter=torch.nn.Parameter(torch.tensor(1.0))
+        )
+
+    @property
+    def beta(self):
+        return torch.nn.functional.softplus(self.raw_beta)
+
+    @property
+    def sigma_f(self):
+        return torch.nn.functional.softplus(self.raw_sigma_f)
+
+    def _full_kernel_matrix(self) -> torch.Tensor:
+        return self.sigma_f**2 * torch.matrix_exp(-self.beta * self.L)

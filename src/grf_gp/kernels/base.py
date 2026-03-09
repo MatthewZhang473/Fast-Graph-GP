@@ -3,7 +3,7 @@ import gpytorch
 from abc import ABC, abstractmethod
 
 
-class BaseGRFKernel(gpytorch.kernels.Kernel, ABC):  # abstract class
+class BaseGRFKernel(gpytorch.kernels.Kernel, ABC):
     def __init__(self, rw_mats, **kwargs):
         super().__init__(**kwargs)
         self.rw_mats = rw_mats
@@ -54,3 +54,22 @@ class BaseGRFKernel(gpytorch.kernels.Kernel, ABC):  # abstract class
             )
         )
         return phi
+
+
+class BaseExactKernel(gpytorch.kernels.Kernel, ABC):
+    """
+    Base class for exact graph kernels defined via a full kernel matrix.
+    """
+
+    @abstractmethod
+    def _full_kernel_matrix(self) -> torch.Tensor:
+        pass
+
+    def forward(self, x1, x2, diag=False, **kwargs):
+        del kwargs
+        K_full = self._full_kernel_matrix()
+        i1 = x1.long().flatten()
+        i2 = x2.long().flatten()
+        if diag:
+            return K_full[i1, i1]
+        return K_full[i1][:, i2]
