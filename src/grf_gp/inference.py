@@ -33,6 +33,16 @@ def pathwise_conditioning(
         \left(
             \mathbf{y} - (\mathbf{g}(\mathbf{x}) + \boldsymbol{\varepsilon})
         \right)
+
+    :param x_train: Training node indices.
+    :param x_test: Test node indices.
+    :param phi: Feature matrix whose rows correspond to graph nodes.
+    :param y_train: Training targets.
+    :param noise_std: Observation noise standard deviation.
+    :param batch_size: Number of posterior samples to draw.
+    :param device: Device on which the computation is performed.
+    :returns: Posterior function samples at ``x_test`` with shape
+        ``(batch_size, len(x_test))``.
     """
     phi_train = phi[x_train, :]
     phi_test = phi[x_test, :]
@@ -94,6 +104,16 @@ def woodbury_pathwise_conditioning(
             \mathbf{\Phi}_{\mathbf{x}}^\top \mathbf{\Phi}_{\mathbf{x}}
         \right)^{-1}
         \mathbf{\Phi}_{\mathbf{x}}^\top
+
+    :param x_train: Training node indices.
+    :param x_test: Test node indices.
+    :param phi: Low-rank feature matrix whose rows correspond to graph nodes.
+    :param y_train: Training targets.
+    :param noise_std: Observation noise standard deviation.
+    :param batch_size: Number of posterior samples to draw.
+    :param device: Device on which the computation is performed.
+    :returns: Posterior function samples at ``x_test`` with shape
+        ``(batch_size, len(x_test))``.
     """
     phi_train = phi[x_train, :]
     phi_test = phi[x_test, :]

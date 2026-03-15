@@ -3,15 +3,12 @@ import scipy.sparse as sp
 
 
 def get_normalized_laplacian(W, sparse=False):
-    """
-    Compute the normalized Laplacian matrix for a graph.
+    """Compute the normalized graph Laplacian.
 
-    Parameters:
-    W (ndarray or sparse matrix): Symmetric adjacency matrix of shape (n, n).
-    sparse (bool): Flag indicating whether the input graph is sparse. Default is False.
-
-    Returns:
-    ndarray or sparse matrix: Normalized Laplacian matrix of shape (n, n).
+    :param W: Symmetric adjacency matrix of shape ``(n, n)``.
+    :param sparse: Whether ``W`` should be treated as a sparse matrix.
+    :returns: Normalized Laplacian matrix of shape ``(n, n)`` with the same
+        dense or sparse representation implied by ``sparse``.
     """
     if sparse:
         degrees = np.array(W.sum(axis=1)).flatten()

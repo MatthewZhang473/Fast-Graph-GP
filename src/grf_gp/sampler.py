@@ -17,8 +17,10 @@ from .utils.csr import to_sparse_csr, build_csr_from_entries
 def _worker_walks(
     args: tuple,
 ) -> List[defaultdict]:
-    """
-    Worker function for multiprocessing random walks.
+    """Run random walks for a worker process.
+
+    :param args: Packed worker arguments containing node chunks and walk settings.
+    :returns: Per-step accumulators keyed by ``(start_node, current_node)`` pairs.
     """
     (
         nodes,
@@ -52,7 +54,17 @@ def _run_walks(
     seed: int,
     show_progress: bool,
 ) -> List[defaultdict]:
-    """Core random-walk loop shared by worker processes."""
+    """Execute the core random-walk loop for a set of start nodes.
+
+    :param nodes: Start nodes assigned to the current worker.
+    :param walks_per_node: Number of walks sampled from each start node.
+    :param p_halt: Probability of terminating a walk after each step.
+    :param max_walk_length: Maximum number of recorded walk steps.
+    :param seed: Base random seed for deterministic per-node sampling.
+    :param show_progress: Whether to display a progress bar for this worker.
+    :returns: Per-step accumulators keyed by ``(start_node, current_node)`` pairs.
+    :raises RuntimeError: If the worker CSR arrays have not been initialized.
+    """
     if _G_CROW is None or _G_COL is None or _G_DATA is None:
         raise RuntimeError("CSR arrays are not available in this process.")
     crow, col, data = _G_CROW, _G_COL, _G_DATA
@@ -86,7 +98,13 @@ def _run_walks(
 
 
 def _init_worker(crow: np.ndarray, col: np.ndarray, data: np.ndarray) -> None:
-    """Initializer for worker processes (bind CSR arrays)."""
+    """Bind CSR arrays in a worker process.
+
+    :param crow: CSR row pointer array.
+    :param col: CSR column index array.
+    :param data: CSR nonzero value array.
+    :returns: ``None``.
+    """
     global _G_CROW, _G_COL, _G_DATA
     _G_CROW = crow
     _G_COL = col
@@ -94,10 +112,7 @@ def _init_worker(crow: np.ndarray, col: np.ndarray, data: np.ndarray) -> None:
 
 
 class GRFSampler:
-    """
-    Generates GRF random walk matrices
-    and returns them as SparseLinearOperator objects.
-    """
+    """Generate GRF random-walk matrices as sparse linear operators."""
 
     def __init__(
         self,
@@ -109,6 +124,18 @@ class GRFSampler:
         use_tqdm: bool = True,
         n_processes: Optional[int] = None,
     ) -> None:
+        """Initialize the GRF random-walk sampler.
+
+        :param adjacency_matrix: Square adjacency matrix of the graph.
+        :param walks_per_node: Number of walks sampled from each node.
+        :param p_halt: Probability of stopping after each walk step.
+        :param max_walk_length: Maximum number of steps retained per walk.
+        :param seed: Random seed used for deterministic sampling.
+        :param use_tqdm: Whether to display progress bars during sampling.
+        :param n_processes: Number of worker processes to use.
+        :returns: ``None``.
+        :raises ValueError: If ``adjacency_matrix`` is not square.
+        """
         self.adjacency_csr = to_sparse_csr(adjacency_matrix).cpu()
         if self.adjacency_csr.size(0) != self.adjacency_csr.size(1):
             raise ValueError("Adjacency matrix must be square.")
@@ -121,8 +148,10 @@ class GRFSampler:
         self.seed = seed or 42
 
     def sample_random_walk_matrices(self) -> List[SparseLinearOperator]:
-        """
-        Perform GRF random walks and return per-step random walk matrices.
+        """Sample per-step random-walk matrices.
+
+        :returns: A list of per-step random-walk matrices wrapped as
+            :class:`~grf_gp.utils.sparse_lo.SparseLinearOperator` objects.
         """
         crow_indices = self.adjacency_csr.crow_indices().numpy()
         col_indices = self.adjacency_csr.col_indices().numpy()
@@ -169,4 +198,8 @@ class GRFSampler:
         return matrices
 
     def __call__(self) -> List[SparseLinearOperator]:
+        """Sample per-step random-walk matrices.
+
+        :returns: A list of per-step random-walk matrices.
+        """
         return self.sample_random_walk_matrices()
