@@ -15,7 +15,9 @@ def diffusion_formula(length: torch.Tensor, beta: torch.Tensor) -> torch.Tensor:
     """
     length = length.to(dtype=beta.dtype, device=beta.device)
     numerator = torch.pow(-beta, length)
-    denominator = torch.pow(torch.tensor(2.0, **beta._tensor_metadata()), length)
+    denominator = torch.pow(
+        torch.tensor(2.0, dtype=beta.dtype, device=beta.device), length
+    )
     denominator *= torch.exp(torch.lgamma(length + 1.0))
     return numerator / denominator
 
@@ -39,7 +41,7 @@ class DiffusionModule:
         walk_lengths = torch.arange(
             max_walk_length, device=self.raw_beta.device, dtype=self.raw_beta.dtype
         )
-        return self.sigma_f**2 * diffusion_formula(walk_lengths, self.beta)
+        return self.sigma_f * diffusion_formula(walk_lengths, self.beta)
 
 
 class DiffusionGRFKernel(BaseGRFKernel, DiffusionModule):
