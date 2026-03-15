@@ -5,7 +5,7 @@ from .base import BaseGRFKernel
 
 class GRFGeneralKernel(BaseGRFKernel):
     """
-    Learnable GRF kernel with a free modulation vector.
+    Learnable GRF kernel with a unconstrained modulation function.
     """
 
     def __init__(self, max_walk_length, rw_mats, **kwargs):

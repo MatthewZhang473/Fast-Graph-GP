@@ -27,7 +27,7 @@ def diffusion(length: torch.Tensor, beta: torch.Tensor) -> torch.Tensor:
 
 class GRFDiffusionKernel(BaseGRFKernel):
     """
-    GRF kernel with diffusion modulation.
+    GRF kernel with diffusion modulation function.
     """
 
     def __init__(self, max_walk_length, rw_mats, **kwargs):

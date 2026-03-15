@@ -14,7 +14,27 @@ def pathwise_conditioning(
     batch_size,
     device,
 ):
-    """Pathwise conditioning to sample from the posterior."""
+    r"""
+    Perform pathwise conditioning to sample from the Gaussian Process posterior.
+
+    This function implements the Matheron's rule (or pathwise update) to produce
+    exact posterior samples by perturbing prior samples with a correction term
+    derived from the residuals of the observations.
+
+    The update follows the identity:
+
+    .. math::
+
+        \mathbf{g}_{|\mathbf{y}}(\cdot) =
+        \mathbf{g}(\cdot)
+        + \hat{\mathbf{K}}_{(\cdot)\mathbf{x}}
+        \left(
+            \hat{\mathbf{K}}_{\mathbf{x}\mathbf{x}} + \sigma_n^2 \mathbf{I}
+        \right)^{-1}
+        \left(
+            \mathbf{y} - (\mathbf{g}(\mathbf{x}) + \boldsymbol{\varepsilon})
+        \right)
+    """
     phi_train = phi[x_train, :]
     phi_test = phi[x_test, :]
 
