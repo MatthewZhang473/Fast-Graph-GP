@@ -1,10 +1,9 @@
 from collections import defaultdict
-from typing import Union
 import torch
 
 
 def to_sparse_csr(
-    adjacency: Union[torch.Tensor, "torch.sparse.Tensor"],
+    adjacency: torch.Tensor,
 ) -> torch.Tensor:
     """
     Coerce input adjacency to a torch.sparse_csr_tensor.

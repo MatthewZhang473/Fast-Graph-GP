@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from typing import Any, cast
 
 
 def plot_gp_with_subsamples(
@@ -55,7 +56,7 @@ def plot_gp_with_subsamples(
         ccount=100,
     )
 
-    ax.scatter(
+    cast(Any, ax).scatter(
         subsampled_x,
         subsampled_y,
         subsampled_z,

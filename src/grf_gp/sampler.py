@@ -4,7 +4,7 @@ import os
 import multiprocessing as mp
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from typing import List, Optional, Union
+from typing import List, Optional
 
 import numpy as np
 import torch
@@ -101,7 +101,7 @@ class GRFSampler:
 
     def __init__(
         self,
-        adjacency_matrix: Union[torch.Tensor, "torch.sparse.Tensor"],
+        adjacency_matrix: torch.Tensor,
         walks_per_node: int = 10,
         p_halt: float = 0.5,
         max_walk_length: int = 10,
