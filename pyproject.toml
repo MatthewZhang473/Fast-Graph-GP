@@ -22,7 +22,26 @@ dependencies = [
     "numpy>=1.21.0",
     "scipy>=1.10.0",
     "tqdm>=4.65.0",
+    "jaxtyping>=0.3.0",
 ]
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.0",
+]
+
+[tool.pyright]
+include = ["src"]
+venvPath = "."
+venv = "venv"
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
+reportMissingImports = true
+reportMissingTypeStubs = false
+reportUnknownParameterType = false
+reportUnknownArgumentType = false
+reportUnknownMemberType = false
+reportUnknownVariableType = false
 
 [project.urls]
 Homepage = "https://github.com/MatthewZhang473/GRF-GP"
