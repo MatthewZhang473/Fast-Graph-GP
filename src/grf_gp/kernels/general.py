@@ -4,7 +4,7 @@ from .base import BaseGRFKernel
 from .low_rank import LowRankGRFKernel
 
 
-class GRFGeneralKernel(BaseGRFKernel):
+class GeneralGRFKernel(BaseGRFKernel):
     """
     Learnable GRF kernel with a unconstrained modulation function.
     """
@@ -22,7 +22,7 @@ class GRFGeneralKernel(BaseGRFKernel):
         return self.raw_modulation_function
 
 
-class LowRankGeneralGRFKernel(LowRankGRFKernel):
+class GeneralLowRankGRFKernel(LowRankGRFKernel):
     def __init__(
         self, rw_mats, max_walk_length: int, proj_dim: int, jlt_seed: int = 42, **kwargs
     ):

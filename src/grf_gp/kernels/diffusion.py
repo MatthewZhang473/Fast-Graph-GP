@@ -42,7 +42,7 @@ class DiffusionModule:
         return self.sigma_f**2 * diffusion_formula(walk_lengths, self.beta)
 
 
-class GRFDiffusionKernel(BaseGRFKernel, DiffusionModule):
+class DiffusionGRFKernel(BaseGRFKernel, DiffusionModule):
     def __init__(self, rw_mats, max_walk_length, **kwargs):
         super().__init__(rw_mats=rw_mats, **kwargs)
         self.max_walk_length = max_walk_length
@@ -53,7 +53,7 @@ class GRFDiffusionKernel(BaseGRFKernel, DiffusionModule):
         return self.compute_modulation(self.max_walk_length)
 
 
-class LowRankDiffusionGRFKernel(LowRankGRFKernel, DiffusionModule):
+class DiffusionLowRankGRFKernel(LowRankGRFKernel, DiffusionModule):
     def __init__(self, rw_mats, max_walk_length, proj_dim, jlt_seed=42, **kwargs):
         super().__init__(
             rw_mats=rw_mats, proj_dim=proj_dim, jlt_seed=jlt_seed, **kwargs
@@ -66,7 +66,7 @@ class LowRankDiffusionGRFKernel(LowRankGRFKernel, DiffusionModule):
         return self.compute_modulation(self.max_walk_length)
 
 
-class ExactDiffusionKernel(BaseExactKernel, DiffusionModule):
+class DiffusionExactKernel(BaseExactKernel, DiffusionModule):
     def __init__(self, L, **kwargs):
         super().__init__(**kwargs)
         self.register_buffer("L", L)
