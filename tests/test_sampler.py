@@ -12,7 +12,7 @@ def _chain_adjacency(num_nodes: int) -> torch.Tensor:
     """
     rows = torch.arange(num_nodes, dtype=torch.int64)
     cols = torch.cat([torch.arange(1, num_nodes), torch.tensor([num_nodes - 1])])
-    data = torch.ones(num_nodes, dtype=torch.float32)
+    data = torch.ones(num_nodes, dtype=torch.float64)
     return torch.sparse_coo_tensor(
         torch.stack([rows, cols]), data, size=(num_nodes, num_nodes)
     ).to_sparse_csr()
@@ -35,14 +35,14 @@ def test_grf_sampler_chain_walks_single_process():
 
     dense = [m.sparse_csr_tensor.to_dense() for m in mats]
 
-    expected_step0 = torch.eye(num_nodes)
-    expected_step1 = torch.zeros(num_nodes, num_nodes)
-    expected_step1[:-1, 1:] = torch.eye(num_nodes - 1)
+    expected_step0 = torch.eye(num_nodes, dtype=torch.float64)
+    expected_step1 = torch.zeros(num_nodes, num_nodes, dtype=torch.float64)
+    expected_step1[:-1, 1:] = torch.eye(num_nodes - 1, dtype=torch.float64)
     expected_step1[-1, -1] = 1.0
 
-    expected_step2 = torch.zeros(num_nodes, num_nodes)
-    expected_step2[:-2, 2:] = torch.eye(num_nodes - 2)
-    expected_step2[-2:, -1:] = torch.tensor([[1.0], [1.0]])
+    expected_step2 = torch.zeros(num_nodes, num_nodes, dtype=torch.float64)
+    expected_step2[:-2, 2:] = torch.eye(num_nodes - 2, dtype=torch.float64)
+    expected_step2[-2:, -1:] = torch.tensor([[1.0], [1.0]], dtype=torch.float64)
 
     assert torch.allclose(dense[0], expected_step0)
     assert torch.allclose(dense[1], expected_step1)
@@ -52,7 +52,7 @@ def test_grf_sampler_chain_walks_single_process():
 def test_grf_sampler_halt_and_multiprocessing():
     # With p_halt=1, only the 0-step matrix should have counts
     adjacency = torch.sparse_coo_tensor(
-        torch.tensor([[0, 1], [1, 0]]), torch.ones(2), size=(2, 2)
+        torch.tensor([[0, 1], [1, 0]]), torch.ones(2, dtype=torch.float64), size=(2, 2)
     ).to_sparse_csr()
 
     sampler = GRFSampler(
@@ -68,7 +68,7 @@ def test_grf_sampler_halt_and_multiprocessing():
     mats = sampler()
     dense = [m.sparse_csr_tensor.to_dense() for m in mats]
 
-    assert torch.allclose(dense[0], torch.eye(2))
+    assert torch.allclose(dense[0], torch.eye(2, dtype=torch.float64))
     assert torch.count_nonzero(dense[1]) == 0
 
 
@@ -76,7 +76,7 @@ def test_grf_sampler_halt_and_multiprocessing():
 def test_grf_sampler_consistent_across_process_counts(n_processes: int):
     adjacency = torch.sparse_coo_tensor(
         torch.tensor([[0, 0, 1], [1, 2, 2]]),
-        torch.tensor([1.0, 0.5, 0.2]),
+        torch.tensor([1.0, 0.5, 0.2], dtype=torch.float64),
         size=(3, 3),
     ).to_sparse_csr()
 
@@ -116,7 +116,7 @@ def test_grf_sampler_matches_adj_powers_small_graph(n_processes: int):
     adjacency = torch.sparse_csr_tensor(
         torch.tensor(crows),
         torch.tensor(cols),
-        torch.tensor(data, dtype=torch.float32),
+        torch.tensor(data, dtype=torch.float64),
         size=(4, 4),
     )
 
