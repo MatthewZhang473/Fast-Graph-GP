@@ -7,6 +7,7 @@ from .base import BaseGRFKernel
 class LowRankGRFKernel(BaseGRFKernel, ABC):
     def __init__(self, rw_mats, proj_dim: int, jlt_seed: int = 42, **kwargs):
         super().__init__(rw_mats=rw_mats, **kwargs)
+        # TODO: check the proj_dim is big enough
         self.proj_dim = proj_dim
         full_dim = rw_mats[0].size(-1)  # a.k.a. number of nodes in the graph
         device = rw_mats[0].device

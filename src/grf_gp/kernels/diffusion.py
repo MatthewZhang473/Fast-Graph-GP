@@ -30,7 +30,7 @@ class GRFDiffusionKernel(BaseGRFKernel):
     GRF kernel with diffusion modulation function.
     """
 
-    def __init__(self, max_walk_length, rw_mats, **kwargs):
+    def __init__(self, rw_mats, max_walk_length: int, **kwargs):
         super().__init__(rw_mats=rw_mats, **kwargs)
 
         self.max_walk_length = max_walk_length
