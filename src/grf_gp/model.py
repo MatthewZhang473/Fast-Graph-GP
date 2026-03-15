@@ -2,12 +2,18 @@ import torch
 import gpytorch
 from abc import ABC, abstractmethod
 from linear_operator.operators import DiagLinearOperator
-from .kernels.base import BaseGRFKernel
+from .kernels.base import BaseGRFKernel, BaseExactKernel
 from .inference import pathwise_conditioning
 
 
 class GraphGP(gpytorch.models.ExactGP, ABC):
-    def __init__(self, x_train, y_train, likelihood, kernel: BaseGRFKernel):
+    def __init__(
+        self,
+        x_train,
+        y_train,
+        likelihood,
+        kernel: BaseGRFKernel | BaseExactKernel,
+    ):
         super().__init__(x_train, y_train, likelihood)
         self.mean_module = gpytorch.means.ZeroMean()
         self.covar_module = kernel
