@@ -1,7 +1,9 @@
 import torch
 import torch.nn.functional as F
+from typing import cast
 from .base import BaseExactKernel, BaseGRFKernel
 from .low_rank import LowRankGRFKernel
+from grf_gp._types import DenseMatrix, RandomWalkMatrices
 
 
 def diffusion_formula(length: torch.Tensor, beta: torch.Tensor) -> torch.Tensor:
@@ -25,19 +27,23 @@ def diffusion_formula(length: torch.Tensor, beta: torch.Tensor) -> torch.Tensor:
 class DiffusionModule:
     """Shared logic for diffusion parameters and modulation."""
 
-    def _init_diffusion_params(self):
-        self.register_parameter("raw_beta", torch.nn.Parameter(torch.tensor(1.0)))
-        self.register_parameter("raw_sigma_f", torch.nn.Parameter(torch.tensor(1.0)))
+    raw_beta: torch.nn.Parameter
+    raw_sigma_f: torch.nn.Parameter
+
+    def _init_diffusion_params(self) -> None:
+        module = cast(torch.nn.Module, self)
+        module.register_parameter("raw_beta", torch.nn.Parameter(torch.tensor(1.0)))
+        module.register_parameter("raw_sigma_f", torch.nn.Parameter(torch.tensor(1.0)))
 
     @property
-    def beta(self):
+    def beta(self) -> torch.Tensor:
         return F.softplus(self.raw_beta)
 
     @property
-    def sigma_f(self):
+    def sigma_f(self) -> torch.Tensor:
         return F.softplus(self.raw_sigma_f)
 
-    def compute_modulation(self, max_walk_length):
+    def compute_modulation(self, max_walk_length: int) -> torch.Tensor:
         walk_lengths = torch.arange(
             max_walk_length, device=self.raw_beta.device, dtype=self.raw_beta.dtype
         )
@@ -45,7 +51,9 @@ class DiffusionModule:
 
 
 class DiffusionGRFKernel(BaseGRFKernel, DiffusionModule):
-    def __init__(self, rw_mats, max_walk_length, **kwargs):
+    def __init__(
+        self, rw_mats: RandomWalkMatrices, max_walk_length: int, **kwargs
+    ) -> None:
         super().__init__(rw_mats=rw_mats, **kwargs)
         self.max_walk_length = max_walk_length
         self._init_diffusion_params()
@@ -56,7 +64,14 @@ class DiffusionGRFKernel(BaseGRFKernel, DiffusionModule):
 
 
 class DiffusionLowRankGRFKernel(LowRankGRFKernel, DiffusionModule):
-    def __init__(self, rw_mats, max_walk_length, proj_dim, jlt_seed=42, **kwargs):
+    def __init__(
+        self,
+        rw_mats: RandomWalkMatrices,
+        max_walk_length: int,
+        proj_dim: int,
+        jlt_seed: int = 42,
+        **kwargs,
+    ) -> None:
         super().__init__(
             rw_mats=rw_mats, proj_dim=proj_dim, jlt_seed=jlt_seed, **kwargs
         )
@@ -69,10 +84,13 @@ class DiffusionLowRankGRFKernel(LowRankGRFKernel, DiffusionModule):
 
 
 class DiffusionExactKernel(BaseExactKernel, DiffusionModule):
-    def __init__(self, L, **kwargs):
+    def __init__(self, L: DenseMatrix, **kwargs) -> None:
         super().__init__(**kwargs)
         self.register_buffer("L", L)
         self._init_diffusion_params()
 
-    def _full_kernel_matrix(self):
-        return self.sigma_f**2 * torch.matrix_exp(-self.beta * self.L)
+    def _full_kernel_matrix(self) -> DenseMatrix:
+        laplacian = cast(torch.Tensor, self.L)
+        return cast(
+            DenseMatrix, self.sigma_f**2 * torch.matrix_exp(-self.beta * laplacian)
+        )

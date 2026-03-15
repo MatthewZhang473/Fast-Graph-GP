@@ -1,10 +1,20 @@
 import torch
 import gpytorch
 from abc import ABC, abstractmethod
+from typing import Any, cast
+
+from grf_gp._types import (
+    DenseMatrix,
+    FeatureMatrixLike,
+    NodeIndexTensor,
+    RandomWalkMatrices,
+)
 
 
 class BaseGRFKernel(gpytorch.kernels.Kernel, ABC):
-    def __init__(self, rw_mats, **kwargs):
+    rw_mats: RandomWalkMatrices
+
+    def __init__(self, rw_mats: RandomWalkMatrices, **kwargs) -> None:
         super().__init__(**kwargs)
         self.rw_mats = rw_mats
 
@@ -13,22 +23,29 @@ class BaseGRFKernel(gpytorch.kernels.Kernel, ABC):
     def modulation_function(self) -> torch.Tensor:
         pass
 
-    def forward(self, x1_idx=None, x2_idx=None, diag=False, **params):
+    def forward(
+        self,
+        x1_idx: NodeIndexTensor | None = None,
+        x2_idx: NodeIndexTensor | None = None,
+        diag: bool = False,
+        **params,
+    ) -> FeatureMatrixLike:
         """
         Efficient Implementation of K[x1, x2], where K = Phi @ Phi^T
         """
 
         phi = self._get_feature_matrix()
+        phi_indexable = cast(Any, phi)
 
         # Handle indexing
         if x1_idx is not None:
             x1_idx = x1_idx.long().flatten()
-            phi_x1 = phi[x1_idx]
+            phi_x1 = cast(Any, phi_indexable)[x1_idx]
         else:
             phi_x1 = phi
         if x2_idx is not None:
             x2_idx = x2_idx.long().flatten()
-            phi_x2 = phi[x2_idx]
+            phi_x2 = cast(Any, phi_indexable)[x2_idx]
         else:
             phi_x2 = phi
 
@@ -40,20 +57,22 @@ class BaseGRFKernel(gpytorch.kernels.Kernel, ABC):
             # Return K[x1, x2] = Phi[x1, :] @ Phi[x2, :]^T
             return phi_x1 @ phi_x2.transpose(-1, -2)
 
-    def _get_feature_matrix(self):
+    def _get_feature_matrix(self) -> FeatureMatrixLike:
         """
         Returns the feature matrix Phi,
         the ith row is the GRF vector for the ith node.
         Ideally this should be lazy-evaluated linear operator.
         """
-        phi = sum(
-            mod_vec * mat
-            for mod_vec, mat in zip(
-                self.modulation_function,
-                self.rw_mats,
-            )
+        return cast(
+            FeatureMatrixLike,
+            sum(
+                mod_vec * mat
+                for mod_vec, mat in zip(
+                    self.modulation_function,
+                    self.rw_mats,
+                )
+            ),
         )
-        return phi
 
 
 class BaseExactKernel(gpytorch.kernels.Kernel, ABC):
@@ -62,10 +81,16 @@ class BaseExactKernel(gpytorch.kernels.Kernel, ABC):
     """
 
     @abstractmethod
-    def _full_kernel_matrix(self) -> torch.Tensor:
+    def _full_kernel_matrix(self) -> DenseMatrix:
         pass
 
-    def forward(self, x1, x2, diag=False, **kwargs):
+    def forward(
+        self,
+        x1: NodeIndexTensor,
+        x2: NodeIndexTensor,
+        diag: bool = False,
+        **kwargs,
+    ) -> torch.Tensor:
         del kwargs
         K_full = self._full_kernel_matrix()
         i1 = x1.long().flatten()
