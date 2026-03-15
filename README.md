@@ -8,7 +8,7 @@ Fast-Graph-GP is the package for performing fast Gaussian Process (GP) inference
 
 - [x] support graph GP inference / training with GRFs
 - [x] supoort low-rank GRF with Johnson-Lindenstrauss Transform (JLT)
-- [ ] support solving low-rank linear system solver using Woodbury formula
+- [x] support solving low-rank linear system solver using Woodbury formula
 - [ ] support GRF++ samplers
 
 
