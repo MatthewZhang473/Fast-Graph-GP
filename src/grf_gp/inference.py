@@ -57,3 +57,64 @@ def pathwise_conditioning(
     v = linear_cg(A._matmul, residual.T, tolerance=gsettings.cg_tolerance.value())
 
     return f_test_prior + (K_test_train @ v).T
+
+
+def woodbury_pathwise_conditioning(
+    x_train,
+    x_test,
+    phi,
+    y_train,
+    noise_std,
+    batch_size,
+    device,
+):
+    r"""
+    Perform pathwise conditioning using a Woodbury solve in feature space.
+
+    This is the low-rank analogue of ``pathwise_conditioning`` for kernels of the
+    form :math:`\hat{\mathbf{K}} = \mathbf{\Phi}\mathbf{\Phi}^\top`, where
+    :math:`\mathbf{\Phi}` has a small feature dimension. It applies the Woodbury
+    identity to solve an equivalent system in small feature space.
+
+    The update follows the identity:
+
+    .. math::
+
+        \left(
+            \mathbf{\Phi}_{\mathbf{x}}\mathbf{\Phi}_{\mathbf{x}}^\top
+            + \sigma_n^2 \mathbf{I}
+        \right)^{-1}
+        =
+        \sigma_n^{-2}\mathbf{I}
+        -
+        \sigma_n^{-4}\mathbf{\Phi}_{\mathbf{x}}
+        \left(
+            \mathbf{I}
+            + \sigma_n^{-2}
+            \mathbf{\Phi}_{\mathbf{x}}^\top \mathbf{\Phi}_{\mathbf{x}}
+        \right)^{-1}
+        \mathbf{\Phi}_{\mathbf{x}}^\top
+    """
+    phi_train = phi[x_train, :]
+    phi_test = phi[x_test, :]
+    dtype = phi.dtype
+
+    noise_variance = noise_std.pow(2)
+    proj_dim = phi_train.size(1)
+
+    eps_prior = torch.randn(batch_size, proj_dim, device=device, dtype=dtype)
+    eps_obs = noise_std * torch.randn(
+        batch_size, phi_train.size(0), device=device, dtype=dtype
+    )
+
+    f_test_prior = eps_prior @ phi_test.T
+    f_train_prior = eps_prior @ phi_train.T
+
+    residual = y_train.unsqueeze(0) - (f_train_prior + eps_obs)
+    gram_features = phi_train.T @ phi_train
+    woodbury_system = torch.eye(proj_dim, device=device, dtype=dtype)
+    woodbury_system += gram_features / noise_variance
+    rhs = phi_train.T @ residual.T
+    u = torch.linalg.solve(woodbury_system, rhs)
+
+    return f_test_prior + (phi_test @ (u / noise_variance)).T
