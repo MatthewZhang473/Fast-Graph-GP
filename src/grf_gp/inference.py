@@ -1,5 +1,4 @@
 import torch
-from torch import float64
 from gpytorch import settings as gsettings
 from linear_operator.operators import IdentityLinearOperator
 from linear_operator.utils import linear_cg
@@ -37,6 +36,7 @@ def pathwise_conditioning(
     """
     phi_train = phi[x_train, :]
     phi_test = phi[x_test, :]
+    dtype = phi.dtype
 
     K_train_train = phi_train @ phi_train.T
     K_test_train = phi_test @ phi_train.T
@@ -45,9 +45,9 @@ def pathwise_conditioning(
         phi_train.size(0), device=device
     )
 
-    eps_prior = torch.randn(batch_size, phi.size(0), device=device, dtype=float64)
+    eps_prior = torch.randn(batch_size, phi.size(1), device=device, dtype=dtype)
     eps_obs = noise_std * torch.randn(
-        batch_size, phi_train.size(0), device=device, dtype=float64
+        batch_size, phi_train.size(0), device=device, dtype=dtype
     )
 
     f_test_prior = eps_prior @ phi_test.T
