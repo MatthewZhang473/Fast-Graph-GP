@@ -24,4 +24,6 @@ class LowRankGRFKernel(BaseGRFKernel, ABC):
         Calculates Phi_low_rank = Phi_full @ JLT_proj
         """
         phi_full = super()._get_feature_matrix()
+        # This final sparse @ dense operation return a dense tensor
+        # Howeverm given nnz(Phi) = O(N), the time complexity is O(N * D_proj)
         return phi_full @ self.jlt_proj
