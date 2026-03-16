@@ -1,0 +1,13 @@
+{%- macro toctree(docnames) -%}
+.. toctree::
+   :maxdepth: {{ maxdepth }}
+{% for docname in docnames %}
+   {{ docname }}
+{%- endfor %}
+{%- endmacro %}
+
+{{ pkgname | e | heading }}
+
+{%- if subpackages or submodules %}
+{{ toctree(subpackages + submodules) }}
+{%- endif %}
