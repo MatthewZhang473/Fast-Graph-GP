@@ -24,6 +24,12 @@ Install Fast-Graph-GP via pip:
 pip install fast-graph-gp
 ```
 
+## Documentation
+
+Hosted documentation is available at:
+
+[https://matthewzhang473.github.io/Fast-Graph-GP/index.html](https://matthewzhang473.github.io/Fast-Graph-GP/index.html)
+
 ## Citing Us
 
 If you use Fast-Graph-GP, please cite the following papers:
